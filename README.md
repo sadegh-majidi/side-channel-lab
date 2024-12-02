@@ -96,9 +96,10 @@ The aim is to recover the first byte of the aes key. The aes key will be used to
 
 ## Grading
 
+2% extra credit each
 1) Covert-Channel Flush & Reload
 2) Covert-Channel Prime & Probe
 3) Aes Flush & Reload
 4) Aes Prime & Probe
 5) Aes Flush & Reload (Exact Byte)
-4) Aes Prime & Probe (Exact Byte)
+6) Aes Prime & Probe (Exact Byte)
