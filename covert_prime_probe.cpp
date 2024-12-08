@@ -25,7 +25,7 @@ void calibrate_threshold(prime_probe::prime_probe_buffer& pb, prime_probe::cache
     uint64_t sum = 0;
     uint64_t miss_thresh = 0, hit_thresh = 0;
     for (uint32_t set = 0; set < pb.number_of_sets; set++) {
-        sum += res.times[set];
+        sum += prime_probe::getTime(res, set);
     }
     hit_thresh = sum / pb.number_of_sets;
     printf("hit average time: %lu\n", hit_thresh);
@@ -35,7 +35,7 @@ void calibrate_threshold(prime_probe::prime_probe_buffer& pb, prime_probe::cache
         prime_probe::clearAll(sett);
         for (uint32_t set = 0; set < pb.number_of_sets; set++) {
             prime_probe::probeSet(pb, res, set);
-            sum += res.times[set];
+            sum += prime_probe::getTime(res, set);
         }
     }
     miss_thresh = sum / (pb.number_of_sets * 8);
