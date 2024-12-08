@@ -20,38 +20,72 @@
 uint64_t timing_threshold = 0;
 
 void calibrate_threshold(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& sett, prime_probe::results& res) {
-    prime_probe::prime(pb);  // Prime the cache
-    prime_probe::probe(pb, res);  // Measure probe timing
+    prime_probe::prime(pb);
+    prime_probe::probe(pb, res);
     uint64_t sum = 0;
-    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
-        sum += res.times[set];
+    uint64_t miss_thresh = 0, hit_thresh = 0;
+    for (int i = 0; i < 8; i++) {
+        for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+            sum += res.times[set];
+        }
     }
-    timing_threshold = sum / pb.number_of_sets;
-    printf("hit average time: %llu", timing_threshold);
+    hit_thresh = sum / pb.number_of_sets;
+    printf("hit average time: %lu\n", hit_thresh);
 
     sum = 0;
-    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
-        prime_probe::clearAll(sett);
-        prime_probe::probeSet(pb, res, set);
-        sum += res.times[set];
+    for (int i = 0; i < 8; i++) {
+        for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+            prime_probe::clearAll(sett);
+            prime_probe::probeSet(pb, res, set);
+            sum += res.times[set];
+        }
+        
     }
-    uint64_t miss_thresh = sum / pb.number_of_sets;
-    printf("miss average time: %llu", miss_thresh);
+    miss_thresh = sum / (pb.number_of_sets * 8);
+    printf("miss average time: %lu\n", miss_thresh);
+
+    timing_threshold = (miss_thresh + hit_thresh) / 2;
+    printf("-> setting probe time threshold to: %lu\n", timing_threshold);
 }
 
 
 //tomato: fill in the next four functions
 void postBit(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& set, uint8_t bit){
-
+    if (bit == 1) {
+        prime_probe::prime(pb);
+    } else {
+        prime_probe::clearAll(set);
+    }
 }
 void postLength(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& set, int length){
+    prime_probe::prime(pb);
 
+    for (uint32_t i = length; i < pb.number_of_sets; i++) {
+        void* current = set.eviction_sets[i];
+        while (current) {
+            current = *((void**)current);
+        }
+    }
 }
 uint8_t recvBit(prime_probe::prime_probe_buffer& pb,prime_probe::results& res){
-
+    prime_probe::probe(pb, res);
+    uint64_t total_time = 0;
+    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+        total_time += res.times[set];
+    }
+    return (total_time / pb.number_of_sets < timing_threshold) ? 1 : 0;
 }
 uint8_t recvLength(prime_probe::prime_probe_buffer& pb,prime_probe::results& res){
+    uint8_t length = 0;
 
+    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+        prime_probe::probeSet(pb, res, set);
+        if (prime_probe::getTime(res, set) < timing_threshold) {
+            length++;
+        }
+    }
+
+    return length;
 }
 inline uint8_t getBit(char src, uint8_t bit_position){
     return (src >> bit_position) & 1;
@@ -96,8 +130,6 @@ int main(int argc, char *argv[]) {
   prime_probe::setup(pb, res, set, number_of_sets, number_of_ways, block_size);
 
   calibrate_threshold(pb, set, res);
-  return 0;
-
 // tomato: you can introduce global variables and keep timing information to facilitate the communication functions.
 
   // process 1 gets a message and posts it.
