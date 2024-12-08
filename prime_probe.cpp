@@ -9,19 +9,19 @@
 #include <sys/mman.h>
 #include <cassert>
 #define PAGE_SIZE 4096
-#define CACHE_ALIGNEMENT 64
+
 void prime_probe::setup(prime_probe::prime_probe_buffer& pb, prime_probe::results& res,prime_probe::cache_sets& set,
                         uint32_t number_of_sets, uint32_t number_of_ways, uint32_t block_size){
     pb.number_of_sets = number_of_sets;
     pb.number_of_ways = number_of_ways;
 
     pb.eviction_sets = (void**)malloc(number_of_sets * sizeof(void *));
-    res.times = (uint64_t*)aligned_alloc(CACHE_ALIGNEMENT, number_of_sets * sizeof(uint64_t));
+    res.times = (uint64_t*)aligned_alloc(block_size, number_of_sets * sizeof(uint64_t));
     // We want to make sure we dont use the same page for multiple ways
-	void* pointers = aligned_alloc(CACHE_ALIGNEMENT, number_of_ways * PAGE_SIZE);
+	void* pointers = aligned_alloc(block_size, number_of_ways * PAGE_SIZE);
     void** pointer_array = (void**)malloc(number_of_ways * sizeof(void *));
 	// A cache set so that we can measure the time it takes to access the cache set
-	void* underlying_for_eviction_sets = aligned_alloc(CACHE_ALIGNEMENT, number_of_ways * PAGE_SIZE);
+	void* underlying_for_eviction_sets = aligned_alloc(block_size, number_of_ways * PAGE_SIZE);
 	set.eviction_sets = (void**)malloc(number_of_sets * sizeof(void *));
     set.number_of_sets = number_of_sets;
     set.number_of_ways = number_of_ways;
