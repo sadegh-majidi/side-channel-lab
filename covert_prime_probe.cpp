@@ -29,7 +29,7 @@ void calibrate_threshold(prime_probe::prime_probe_buffer& pb, prime_probe::cache
             sum += res.times[set];
         }
     }
-    hit_thresh = sum / pb.number_of_sets;
+    hit_thresh = sum / (pb.number_of_sets * 8);
     printf("hit average time: %lu\n", hit_thresh);
 
     sum = 0;
