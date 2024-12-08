@@ -16,6 +16,30 @@
 #include "helper.h"
 
 // You can define global variables if you feel the need.
+
+uint64_t timing_threshold = 0;
+
+void calibrate_threshold(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& sett, prime_probe::results& res) {
+    prime_probe::prime(pb);  // Prime the cache
+    prime_probe::probe(pb, res);  // Measure probe timing
+    uint64_t sum = 0;
+    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+        sum += res.times[set];
+    }
+    timing_threshold = sum / pb.number_of_sets;
+    printf("hit average time: %llu", timing_threshold);
+
+    sum = 0;
+    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+        prime_probe::clearAll(sett);
+        prime_probe::probeSet(pb, res, set);
+        sum += res.times[set];
+    }
+    uint64_t miss_thresh = sum / pb.number_of_sets;
+    printf("miss average time: %llu", miss_thresh);
+}
+
+
 //tomato: fill in the next four functions
 void postBit(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& set, uint8_t bit){
 
@@ -38,16 +62,16 @@ inline uint8_t setBit(char src, uint8_t bit_position){
 }
 
 int process1(){
-    volatile x = 135;
-    volatile y = 12;
+    volatile int x = 135;
+    volatile int y = 12;
     for (int i= 0; i <1000; i++){
         x = x * y;
     }
 }
 
 int process2(){
-    volatile x = 135;
-    volatile y = 12;
+    volatile int x = 135;
+    volatile int y = 12;
     for (int i= 0; i <1000; i++){
         x = x * y;
     }
@@ -70,6 +94,9 @@ int main(int argc, char *argv[]) {
   prime_probe::results res;
   prime_probe::cache_sets set;
   prime_probe::setup(pb, res, set, number_of_sets, number_of_ways, block_size);
+
+  calibrate_threshold(pb, set, res);
+  return 0;
 
 // tomato: you can introduce global variables and keep timing information to facilitate the communication functions.
 

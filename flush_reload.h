@@ -5,11 +5,21 @@
 #include <x86intrin.h>
 namespace flush_reload {
 inline void flush(const void *addr) {
-        asm volatile(/*tomato*/);
+        asm volatile("clflush (%0)" :: "r"(addr));
 }
 
 inline uint64_t timeMemoryAccess(const void *addr){
-    //tomato: return time for access.
+    uint64_t time1, time2, msl;
+    _mm_mfence();
+    _mm_lfence();
+    time1 = __rdtsc();
+    _mm_lfence();
+    int temp = *((int *) addr);
+    _mm_lfence();
+    time2 = __rdtsc();
+    _mm_lfence();
+    msl = time2 - time1;
+    return msl;
 }
 
 uint64_t miss_threshold;

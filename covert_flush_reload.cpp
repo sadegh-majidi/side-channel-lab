@@ -37,16 +37,16 @@ uint8_t recvLength(){
 }
 
 int process1(){
-    volatile x = 135;
-    volatile y = 12;
+    volatile int x = 135;
+    volatile int y = 12;
     for (int i= 0; i <1000; i++){
         x = x * y;
     }
 }
 
 int process2(){
-    volatile x = 135;
-    volatile y = 12;
+    volatile int x = 135;
+    volatile int y = 12;
     for (int i= 0; i <1000; i++){
         x = x * y;
     }
