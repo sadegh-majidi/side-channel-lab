@@ -78,10 +78,9 @@ void prime_probe::setup(prime_probe::prime_probe_buffer& pb, prime_probe::result
     }
 
     void prime_probe::clearAll(prime_probe::cache_sets &set){
-        for (uint32_t set_index = 0; set_index < set.number_of_sets; set_index++) {
-            void* current = set.eviction_sets[set_index];
+        for (int i = 0; i < set.number_of_sets; i++) {
+            void* current = set.eviction_sets[i];
             while (current) {
-                _mm_clflush(current);
                 current = *((void**)current);
             }
         }
