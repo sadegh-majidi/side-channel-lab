@@ -24,22 +24,19 @@ void calibrate_threshold(prime_probe::prime_probe_buffer& pb, prime_probe::cache
     prime_probe::probe(pb, res);
     uint64_t sum = 0;
     uint64_t miss_thresh = 0, hit_thresh = 0;
-    for (int i = 0; i < 8; i++) {
-        for (uint32_t set = 0; set < pb.number_of_sets; set++) {
-            sum += res.times[set];
-        }
+    for (uint32_t set = 0; set < pb.number_of_sets; set++) {
+        sum += res.times[set];
     }
-    hit_thresh = sum / (pb.number_of_sets * 8);
+    hit_thresh = sum / pb.number_of_sets;
     printf("hit average time: %lu\n", hit_thresh);
 
     sum = 0;
     for (int i = 0; i < 8; i++) {
+        prime_probe::clearAll(sett);
         for (uint32_t set = 0; set < pb.number_of_sets; set++) {
-            prime_probe::clearAll(sett);
             prime_probe::probeSet(pb, res, set);
             sum += res.times[set];
         }
-        
     }
     miss_thresh = sum / (pb.number_of_sets * 8);
     printf("miss average time: %lu\n", miss_thresh);
@@ -58,6 +55,7 @@ void postBit(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& set, 
     }
 }
 void postLength(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& set, int length){
+    printf("Started postLength\n");
     prime_probe::prime(pb);
 
     for (uint32_t i = length; i < pb.number_of_sets; i++) {
@@ -66,6 +64,7 @@ void postLength(prime_probe::prime_probe_buffer& pb, prime_probe::cache_sets& se
             current = *((void**)current);
         }
     }
+    printf("Finished postLength\n");
 }
 uint8_t recvBit(prime_probe::prime_probe_buffer& pb,prime_probe::results& res){
     prime_probe::probe(pb, res);
@@ -76,14 +75,17 @@ uint8_t recvBit(prime_probe::prime_probe_buffer& pb,prime_probe::results& res){
     return (total_time / pb.number_of_sets < timing_threshold) ? 1 : 0;
 }
 uint8_t recvLength(prime_probe::prime_probe_buffer& pb,prime_probe::results& res){
+    printf("Started recvLength\n");
     uint8_t length = 0;
 
     for (uint32_t set = 0; set < pb.number_of_sets; set++) {
         prime_probe::probeSet(pb, res, set);
+        printf("probe time for set %u is: %lu\n", set, prime_probe::getTime(res, set));
         if (prime_probe::getTime(res, set) < timing_threshold) {
             length++;
         }
     }
+    printf("Finished recvLength\n");
 
     return length;
 }
